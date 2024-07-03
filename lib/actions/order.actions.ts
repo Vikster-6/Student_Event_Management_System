@@ -50,11 +50,13 @@ export const checkoutOrder = async (order: CheckoutOrderParams) => {
 export const createOrder = async (order: CreateOrderParams) => {
   try {
     await connectToDatabase();
+
+    const buyer = await User.findOne({ clerkId: order.buyerId });
     
     const newOrder = await Order.create({
       ...order,
       event: order.eventId,
-      buyer: order.buyerId,
+      buyer: buyer._id,
     });
 
     return JSON.parse(JSON.stringify(newOrder));
@@ -155,17 +157,17 @@ export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUs
 export const onCheckout = async (event: IEvent, userId: string) => {
   await connectToDatabase();
   
-  const buyer = await User.findOne({ clerkId: userId });
+  // const buyer = await User.findOne({ clerkId: userId });
 
-  console.log(buyer);
+  // console.log(buyer);
 
-  if (buyer) {
+  if (userId) {
     const order = {
       eventTitle: event.title,
       eventId: event._id,
       price: event.price,
       isFree: event.isFree,
-      buyerId: buyer._id,
+      buyerId: userId,
     }
 
     console.log("Order:", order)
