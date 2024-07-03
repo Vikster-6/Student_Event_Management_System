@@ -155,13 +155,19 @@ export const onCheckout = async (event: IEvent, userId: string) => {
   
   const buyer = await User.findOne({ clerkId: userId });
 
-  const order = {
-    eventTitle: event.title,
-    eventId: event._id,
-    price: event.price,
-    isFree: event.isFree,
-    buyerId: buyer._id,
+  console.log(buyer);
+
+  if (buyer) {
+    const order = {
+      eventTitle: event.title,
+      eventId: event._id,
+      price: event.price,
+      isFree: event.isFree,
+      buyerId: buyer._id,
+    }
+
+    await checkoutOrder(order);
   }
 
-  await checkoutOrder(order);
+
 }
