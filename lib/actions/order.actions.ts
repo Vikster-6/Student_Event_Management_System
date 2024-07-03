@@ -39,6 +39,8 @@ export const checkoutOrder = async (order: CheckoutOrderParams) => {
       cancel_url: `${process.env.NEXT_PUBLIC_SERVER_URL}/`,
     });
 
+    console.log("Sssion:", session);
+
     redirect(session.url!)
   } catch (error) {
     throw error;
@@ -165,6 +167,8 @@ export const onCheckout = async (event: IEvent, userId: string) => {
       isFree: event.isFree,
       buyerId: buyer._id,
     }
+
+    console.log("Order:", order)
 
     await checkoutOrder(order);
   }
