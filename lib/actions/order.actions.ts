@@ -9,6 +9,7 @@ import Order from '../database/models/order.model';
 import Event from '../database/models/event.model';
 import {ObjectId} from 'mongodb';
 import User from '../database/models/user.model';
+import { IEvent } from '../database/models/event.model';
 
 export const checkoutOrder = async (order: CheckoutOrderParams) => {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
@@ -121,8 +122,10 @@ export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUs
   try {
     await connectToDatabase()
 
+    const user = await User.findOne({ clerkId: userId })
+
     const skipAmount = (Number(page) - 1) * limit
-    const conditions = { buyer: userId }
+    const conditions = { buyer: user._id }
 
     const orders = await Order.distinct('event._id')
       .find(conditions)
@@ -145,4 +148,20 @@ export async function getOrdersByUser({ userId, limit = 3, page }: GetOrdersByUs
   } catch (error) {
     handleError(error)
   }
+}
+
+export const onCheckout = async (event: IEvent, userId: string) => {
+  await connectToDatabase();
+  
+  const buyer = await User.findOne({ clerkId: userId });
+
+  const order = {
+    eventTitle: event.title,
+    eventId: event._id,
+    price: event.price,
+    isFree: event.isFree,
+    buyerId: buyer._id,
+  }
+
+  await checkoutOrder(order);
 }

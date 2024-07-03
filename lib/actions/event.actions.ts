@@ -32,10 +32,10 @@ export async function createEvent({ userId, event, path }: CreateEventParams) {
   try {
     await connectToDatabase()
 
-    const organizer = await User.findById(userId)
+    const organizer = await User.findOne({ clerkId: userId })
     if (!organizer) throw new Error('Organizer not found')
 
-    const newEvent = await Event.create({ ...event, category: event.categoryId, organizer: userId })
+    const newEvent = await Event.create({ ...event, category: event.categoryId, organizer: organizer._id })
     revalidatePath(path)
 
     return JSON.parse(JSON.stringify(newEvent))
@@ -50,6 +50,7 @@ export async function getEventById(eventId: string) {
     await connectToDatabase()
 
     const event = await populateEvent(Event.findById(eventId))
+    // console.log('event', event)
 
     if (!event) throw new Error('Event not found')
 
@@ -64,8 +65,10 @@ export async function updateEvent({ userId, event, path }: UpdateEventParams) {
   try {
     await connectToDatabase()
 
+    const organizer = await User.findOne({ clerkId: userId })
+
     const eventToUpdate = await Event.findById(event._id)
-    if (!eventToUpdate || eventToUpdate.organizer.toHexString() !== userId) {
+    if (!eventToUpdate || eventToUpdate.organizer.toHexString() !== organizer._id.toHexString()) {
       throw new Error('Unauthorized or event not found')
     }
 
@@ -127,8 +130,13 @@ export async function getAllEvents({ query, limit = 6, page, category }: GetAllE
 export async function getEventsByUser({ userId, limit = 6, page }: GetEventsByUserParams) {
   try {
     await connectToDatabase()
+    // console.log('userId', userId)
 
-    const conditions = { organizer: userId }
+    const organizer = await User.findOne({ clerkId: userId })
+
+    // console.log('organizer', organizer)
+
+    const conditions = { organizer: organizer._id }
     const skipAmount = (page - 1) * limit
 
     const eventsQuery = Event.find(conditions)
